@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargando - Commons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030305; /* Deep black/charcoal base */
+        }
+        
+        /* --- Liquid Background Animations --- */
+        .liquid-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.7;
+            animation: float 20s infinite ease-in-out alternate;
+            z-index: 0;
+        }
+        .blob-1 {
+            top: 10%; left: 10%; 
+            width: 40vw; height: 40vw; 
+            background: radial-gradient(circle, #1a1c23 0%, transparent 70%);
+        }
+        .blob-2 {
+            bottom: 10%; right: 10%; 
+            width: 50vw; height: 50vw; 
+            background: radial-gradient(circle, #22252e 0%, transparent 70%);
+            animation-delay: -5s;
+            animation-duration: 25s;
+        }
+        .blob-3 {
+            top: 30%; left: 40%; 
+            width: 35vw; height: 35vw; 
+            background: radial-gradient(circle, #2d303b 0%, transparent 70%);
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(10%, 15%) scale(1.05); }
+            66% { transform: translate(-10%, 5%) scale(0.95); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* --- Dark Liquid Glassmorphism Utilities --- */
+        .liquid-glass-card {
+            background: rgba(20, 22, 28, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 
+                0 20px 50px -10px rgba(0, 0, 0, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* --- Loading Bar Animations --- */
+        .loading-bar-container {
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        
+        .loading-bar-indicator {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -35%;
+            width: 35%;
+            background: linear-gradient(90deg, transparent, rgba(241, 245, 249, 0.9), transparent);
+            border-radius: 9999px;
+            animation: indeterminate 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            box-shadow: 0 0 15px rgba(241, 245, 249, 0.3);
+        }
+
+        @keyframes indeterminate {
+            0% { left: -35%; }
+            100% { left: 100%; }
+        }
+        
+        /* Subtle pulse for the logo */
+        @keyframes soft-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.97); }
+        }
+        .animate-soft-pulse {
+            animation: soft-pulse 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="text-slate-300 min-h-screen relative overflow-hidden flex items-center justify-center selection:bg-slate-700 selection:text-white">
+
+    <!-- Liquid Animated Background -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="liquid-blob blob-1"></div>
+        <div class="liquid-blob blob-2"></div>
+        <div class="liquid-blob blob-3"></div>
+    </div>
+
+    <!-- Center Loading Card -->
+    <main class="relative z-10 w-full max-w-sm px-6">
+        <div class="liquid-glass-card rounded-3xl p-10 flex flex-col items-center text-center animate-soft-pulse">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-900 font-bold text-xl shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+                    C
+                </div>
+                <span class="text-3xl font-bold tracking-tight text-slate-100">Commons</span>
+            </div>
+
+            <!-- Loading Bar -->
+            <div class="w-full h-1.5 loading-bar-container mb-6">
+                <div class="loading-bar-indicator"></div>
+            </div>
+
+            <!-- Loading Text -->
+            <p class="text-sm font-medium tracking-[0.1em] text-slate-400 uppercase animate-pulse">
+                Cargando comunidad...
+            </p>
+            
+        </div>
+    </main>
+
+</body>
+</html>

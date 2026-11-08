@@ -2,8 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 vi.mock('next/font/google', () => ({
-  Archivo: () => ({ variable: 'archivo', className: 'archivo' }),
-  Archivo_Black: () => ({ variable: 'archivo-black', className: 'archivo-black' }),
+  Inter: () => ({ variable: 'inter', className: 'inter' }),
   IBM_Plex_Mono: () => ({ variable: 'ibm-plex-mono', className: 'ibm-plex-mono' }),
 }));
 

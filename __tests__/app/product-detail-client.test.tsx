@@ -94,8 +94,8 @@ describe('ProductDetailClient', () => {
       user: { _id: 'user-999' },
     });
     render(<ProductDetailClient productId="p1" />);
-    expect(screen.getByText('Contactar Vendedor')).toBeInTheDocument();
-    expect(screen.getByText('Agregar al Carrito')).toBeInTheDocument();
+    expect(screen.getByText('Contactar vendedor')).toBeInTheDocument();
+    expect(screen.getByText('Agregar al carrito')).toBeInTheDocument();
   });
 
   it('should not show action buttons for unauthenticated user', () => {
@@ -106,8 +106,8 @@ describe('ProductDetailClient', () => {
       isAuthenticated: false, user: null,
     });
     render(<ProductDetailClient productId="p1" />);
-    expect(screen.queryByText('Contactar Vendedor')).not.toBeInTheDocument();
-    expect(screen.queryByText('Agregar al Carrito')).not.toBeInTheDocument();
+    expect(screen.queryByText('Contactar vendedor')).not.toBeInTheDocument();
+    expect(screen.queryByText('Agregar al carrito')).not.toBeInTheDocument();
   });
 
   it('should show category and store links', () => {
@@ -146,8 +146,8 @@ describe('ProductDetailClient', () => {
       user: { _id: 'seller-123' },
     });
     render(<ProductDetailClient productId="p1" />);
-    expect(screen.queryByText('Contactar Vendedor')).not.toBeInTheDocument();
-    expect(screen.getByText('Agregar al Carrito')).toBeInTheDocument();
+    expect(screen.queryByText('Contactar vendedor')).not.toBeInTheDocument();
+    expect(screen.getByText('Agregar al carrito')).toBeInTheDocument();
   });
 
   it('should show back link to products', () => {

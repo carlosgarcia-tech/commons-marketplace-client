@@ -366,20 +366,35 @@ describe('ApiClient', () => {
     });
   });
 
-  describe('handleLogout', () => {
-    it('should clear localStorage and redirect', async () => {
+  it('should not trigger session expiry for auth endpoints (login 401 is a business outcome)', async () => {
+    const interceptor = mockInstance.interceptors.response.use.mock.calls[0][1];
+    const error = { response: { status: 401 }, config: { url: API_ENDPOINTS.auth.login } };
+
+    localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'kept' } }));
+
+    await expect(interceptor(error)).rejects.toBe(error);
+    // Session state must be untouched: the user may still log in correctly.
+    expect(localStorage.getItem('auth-storage')).not.toBeNull();
+  });
+
+  describe('handleExpiredSession', () => {
+    it('should clear storage and cookies without navigating away', async () => {
       const interceptor = mockInstance.interceptors.response.use.mock.calls[0][1];
-      const originalConfig = { _retry: false, headers: {} };
+      const originalConfig = { _retry: false, headers: {}, url: '/api/v1/wishlist' };
       const error = { response: { status: 401 }, config: originalConfig };
 
-      localStorage.setItem('auth-storage', JSON.stringify({ state: {} }));
+      localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'old' } }));
+      document.cookie = 'auth-token=old; path=/';
 
-      delete (window as any).location;
-      (window as any).location = { href: '' };
+      let expiredFired = false;
+      window.addEventListener('auth:session-expired', () => { expiredFired = true; }, { once: true });
 
       await expect(interceptor(error)).rejects.toBe(error);
       expect(localStorage.getItem('auth-storage')).toBeNull();
-      expect(window.location.href).toBe('/');
+      expect(document.cookie).not.toContain('auth-token=old');
+      expect(expiredFired).toBe(true);
+      // Stays on the page: no forced location change
+      expect(window.location.pathname).toBe('/');
     });
   });
 });

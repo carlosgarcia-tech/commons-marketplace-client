@@ -1,20 +1,14 @@
 import type { Metadata } from 'next';
-import { Archivo, Archivo_Black, IBM_Plex_Mono } from 'next/font/google';
+import { Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { Navbar, Footer } from '@/components/layout';
 import { ChatWidgetLoader } from '@/components/chat/chat-widget-loader';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
-const archivo = Archivo({
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+const inter = Inter({
+  weight: ['300', '400', '500', '600', '800'],
   subsets: ['latin'],
   variable: '--font-body',
-});
-
-const archivoBlack = Archivo_Black({
-  weight: ['400'],
-  subsets: ['latin'],
-  variable: '--font-display',
 });
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -38,10 +32,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${archivo.variable} ${archivoBlack.variable} ${ibmPlexMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background font-body">
+    <html lang="es" className={`${inter.variable} ${ibmPlexMono.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-background font-body text-foreground">
+        <div className="liquid-bg" aria-hidden>
+          <div className="blob blob-1" />
+          <div className="blob blob-2" />
+          <div className="blob blob-3" />
+        </div>
         <Navbar />
-        <main className="flex-1 mesh-bg">
+        <main className="relative z-10 flex-1">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
         <ChatWidgetLoader />

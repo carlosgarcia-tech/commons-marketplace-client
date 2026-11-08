@@ -19,7 +19,7 @@ export default function NewProductPage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagesError, setImagesError] = useState<string | null>(null);
 
-  const { values, errors, isSubmitting, error, handleChange, handleSubmit, setFieldError } = useFormField({
+  const { values, errors, isSubmitting, error, handleChange, handleSubmit } = useFormField({
     initialValues: {
       name: '',
       description: '',

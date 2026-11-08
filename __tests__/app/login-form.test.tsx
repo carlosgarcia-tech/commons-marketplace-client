@@ -91,4 +91,18 @@ describe('LoginForm', () => {
     mockAuthState.error = null;
   });
 
+  it('should clear the password but keep the email after a failed login', async () => {
+    const user = userEvent.setup();
+    mockLogin.mockRejectedValueOnce(new Error('Credenciales inválidas'));
+    const { LoginForm } = await import('@/app/login/login-form');
+    render(<LoginForm />);
+    await user.type(screen.getByLabelText(/email/i), 'test@test.com');
+    await user.type(screen.getByLabelText(/contraseña/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /entrar/i }));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/contraseña/i)).toHaveValue('');
+      expect(screen.getByLabelText(/email/i)).toHaveValue('test@test.com');
+    });
+  });
+
 });

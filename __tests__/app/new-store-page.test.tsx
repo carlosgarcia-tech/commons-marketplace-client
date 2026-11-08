@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const mockPush = vi.fn();
@@ -35,28 +35,9 @@ vi.mock('@/lib/api', () => ({
   storeApi: { create: mockCreate },
 }));
 
-const mockHandleSubmit = vi.fn((e: any) => { e.preventDefault(); });
-const mockHandleChange = vi.fn();
-const mockFormFieldState = {
-  values: { storeName: '', description: '' },
-  errors: {} as Record<string, string>,
-  isSubmitting: false,
-  error: null as string | null,
-  handleChange: mockHandleChange,
-  handleSubmit: mockHandleSubmit,
-  setFieldError: vi.fn(),
-};
-
-vi.mock('@/hooks/use-form-field', () => ({
-  useFormField: vi.fn(() => mockFormFieldState),
-}));
-
 beforeEach(() => {
   vi.clearAllMocks();
-  mockFormFieldState.values = { storeName: '', description: '' };
-  mockFormFieldState.errors = {};
-  mockFormFieldState.isSubmitting = false;
-  mockFormFieldState.error = null;
+  mockCreate.mockResolvedValue({});
 });
 
 describe('NewStorePage', () => {
@@ -72,27 +53,17 @@ describe('NewStorePage', () => {
   });
 
   it('debería mostrar errores de validación para nombre vacío', async () => {
-    mockFormFieldState.errors = { storeName: 'El nombre de la tienda es requerido' };
-    mockFormFieldState.handleSubmit = vi.fn((e: any) => {
-      e.preventDefault();
-    });
-
     const { default: NewStorePage } = await import('@/app/dashboard/new-store/page');
     render(<NewStorePage />);
 
+    // Pointer-based clicks are flaky in jsdom for this layout; submit directly.
+    fireEvent.submit(document.querySelector('form')!);
     await waitFor(() => {
       expect(screen.getByText('El nombre de la tienda es requerido')).toBeInTheDocument();
     });
   });
 
   it('debería enviar el formulario y redirigir', async () => {
-    mockCreate.mockResolvedValue({});
-    mockFormFieldState.handleSubmit = vi.fn(async (e: any) => {
-      e.preventDefault();
-      await mockCreate();
-      mockPush('/dashboard');
-    });
-
     const { default: NewStorePage } = await import('@/app/dashboard/new-store/page');
     const user = userEvent.setup();
     render(<NewStorePage />);

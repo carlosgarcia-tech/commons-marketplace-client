@@ -1,11 +1,12 @@
+/* Images come from arbitrary Supabase storage hosts; next/image would
+   require host-by-host remotePatterns churn. */
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { memo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useStores } from '@/hooks/use-stores';
 import { Skeleton, Button, Badge } from '@/components/ui';
-import { getStoreSlug } from '@/types';
 
 interface Store {
   _id: string;
@@ -24,9 +25,9 @@ const StoreCard = memo(function StoreCard({ store }: { store: Store }) {
 
   return (
     <Link href={`/stores/${storeSlug}`} className="group block focus:outline-none">
-      <div className="industrial-card rounded-none overflow-hidden transition-all duration-300 hover:shadow-[6px_6px_0px_-2px_var(--gray-300)]">
-        {/* Banner blur */}
-        <div className="relative h-[90px] overflow-hidden bg-gray-100 border-b-2 border-gray-200">
+      <div className="industrial-card overflow-hidden">
+        {/* Banner blur from the store's own logo */}
+        <div className="relative h-[90px] overflow-hidden bg-[var(--gray-50)] rounded-t-[10px]">
           {store.logo ? (
             <img
               src={store.logo}
@@ -36,36 +37,26 @@ const StoreCard = memo(function StoreCard({ store }: { store: Store }) {
             />
           ) : (
             <div
-              className="absolute inset-0 opacity-15"
+              className="absolute inset-0 opacity-25"
               style={{ background: store.accentColor ?? 'var(--primary)' }}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface/80" />
-
-          {/* Noise overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03]"
-            style={{
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")',
-              backgroundSize: '128px 128px',
-            }}
-          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[var(--glass-bg)]" />
         </div>
 
         {/* Logo centered over banner */}
         <div className="flex justify-center">
-          <div className="relative -mt-9 w-[72px] h-[72px] border-2 border-gray-200 overflow-hidden bg-surface flex items-center justify-center z-10 group-hover:border-primary transition-colors duration-200">
+          <div className="relative -mt-9 w-[72px] h-[72px] rounded-2xl overflow-hidden glass-strong flex items-center justify-center z-10">
             {store.logo ? (
-              <Image
+              <img
                 src={store.logo}
                 alt={store.storeName}
-                width={72}
-                height={72}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             ) : (
               <span
-                className="text-2xl font-display font-black"
+                className="text-2xl font-medium"
                 style={{ color: store.accentColor ?? 'var(--primary)' }}
               >
                 {initials}
@@ -75,18 +66,18 @@ const StoreCard = memo(function StoreCard({ store }: { store: Store }) {
         </div>
 
         {/* Body */}
-        <div className="px-5 pt-3 pb-5 text-center bg-surface">
-          <p className="text-sm font-display font-semibold text-foreground tracking-tight truncate">
+        <div className="px-5 pt-3 pb-5 text-center">
+          <p className="text-sm font-medium text-foreground tracking-tight truncate">
             {store.storeName}
           </p>
 
           {store.description && (
-            <p className="text-[12px] text-gray-400 mt-1 line-clamp-2 leading-relaxed font-body">
+            <p className="text-[12px] text-gray-500 mt-1 line-clamp-2 leading-relaxed font-body">
               {store.description}
             </p>
           )}
 
-          <div className="flex items-center justify-center mt-4 pt-3 border-t-2 border-gray-100">
+          <div className="flex items-center justify-center mt-4 pt-3 border-t border-[var(--glass-border)]">
             <Badge
               variant={
                 store.status === 'Approved'
@@ -95,7 +86,7 @@ const StoreCard = memo(function StoreCard({ store }: { store: Store }) {
                   ? 'warning'
                   : 'danger'
               }
-              className="text-[10px] font-mono uppercase tracking-wider"
+              className="text-[10px] font-mono"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5" />
               {store.status}
@@ -109,12 +100,12 @@ const StoreCard = memo(function StoreCard({ store }: { store: Store }) {
 
 function StoreSkeleton() {
   return (
-    <div className="industrial-card rounded-none overflow-hidden border-2 border-gray-200">
+    <div className="glass overflow-hidden rounded-2xl">
       <Skeleton className="h-[90px] w-full rounded-none" />
       <div className="flex justify-center">
-        <Skeleton className="-mt-9 w-[72px] h-[72px] rounded-none z-10 relative border-2 border-gray-200" />
+        <Skeleton className="-mt-9 w-[72px] h-[72px] rounded-2xl z-10 relative" />
       </div>
-      <div className="px-5 pt-3 pb-5 flex flex-col items-center space-y-2 bg-surface">
+      <div className="px-5 pt-3 pb-5 flex flex-col items-center space-y-2">
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-3 w-1/2" />
         <Skeleton className="h-5 w-20 mt-2" />
@@ -141,9 +132,9 @@ export const StoresList = memo(function StoresList() {
 
   if (error) {
     return (
-      <div className="text-center py-16 border-2 border-dashed border-gray-300 bg-surface">
-        <p className="text-danger font-mono uppercase tracking-wider text-sm">{error}</p>
-        <Button onClick={refetch} variant="outline" className="mt-6 font-mono uppercase text-xs">
+      <div className="text-center py-16 glass rounded-2xl col-span-full">
+        <p className="text-danger text-sm">{error}</p>
+        <Button onClick={refetch} variant="outline" className="mt-6 text-xs font-mono">
           Reintentar
         </Button>
       </div>
@@ -152,29 +143,20 @@ export const StoresList = memo(function StoresList() {
 
   if (stores.length === 0) {
     return (
-      <div className="text-center py-16 border-2 border-dashed border-gray-300 bg-surface">
-        <p className="text-gray-400 font-mono uppercase tracking-wider text-sm">No hay tiendas disponibles</p>
+      <div className="text-center py-16 glass rounded-2xl col-span-full">
+        <p className="text-gray-500 text-sm">No hay tiendas disponibles</p>
       </div>
     );
   }
 
   return (
     <div>
-      <p className="mb-6 text-xs font-mono text-gray-400 uppercase tracking-wider border-b-2 border-gray-200 pb-3">
+      <p className="mb-6 text-xs font-mono text-gray-400 tracking-wider border-b border-[var(--glass-border)] pb-3">
         {total} tiendas encontradas
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {stores.map((store, index) => (
-          <div
-            key={store._id}
-            style={{
-              animationDelay: `${index * 60}ms`,
-              animationFillMode: 'both',
-            }}
-            className="animate-fadeInUp"
-          >
-            <StoreCard store={store} />
-          </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 stagger-child">
+        {stores.map((store) => (
+          <StoreCard key={store._id} store={store} />
         ))}
       </div>
     </div>

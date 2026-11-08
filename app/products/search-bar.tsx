@@ -104,8 +104,8 @@ function SearchBarContent() {
       </div>
 
       {showRecent && recentSearches.length > 0 && !query && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-surface border-2 border-gray-200 p-2 z-50">
-          <p className="text-[10px] font-mono uppercase tracking-wider text-gray-400 mb-1 px-2">
+        <div className="absolute top-full left-0 right-0 mt-2 glass-strong rounded-xl p-2 z-50">
+          <p className="text-[10px] font-mono tracking-wider text-gray-400 mb-1 px-2">
             Búsquedas recientes
           </p>
           {recentSearches.map((search, i) => (
@@ -113,7 +113,7 @@ function SearchBarContent() {
               key={i}
               type="button"
               onClick={() => handleRecentClick(search)}
-              className="block w-full text-left px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+              className="block w-full text-left px-2 py-1.5 text-sm text-gray-600 hover:text-foreground hover:bg-white/5 rounded-lg transition-colors"
             >
               {search}
             </button>

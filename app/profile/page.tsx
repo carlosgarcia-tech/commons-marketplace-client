@@ -1,9 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import { userApi } from '@/lib/api';
-import { Button, Input, Spinner } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { FIELD_LIMITS, optionalText } from '@/lib/validation';
 import { sanitizeFormData } from '@/lib/sanitize';
 

@@ -66,31 +66,33 @@ beforeEach(() => {
 });
 
 describe('HomePage', () => {
-  it('should render welcome heading', async () => {
+  async function renderHome() {
     const { default: HomePage } = await import('@/app/page');
-    render(<HomePage />);
-    expect(screen.getByText(/Bienvenido a Commons Marketplace/)).toBeInTheDocument();
+    // async RSC: resolve the tree before rendering (render(<HomePage/>) mounts nothing)
+    render(await HomePage());
+    return screen;
+  }
+
+  it('should render hero heading', async () => {
+    await renderHome();
+    expect(screen.getByText(/Tu comunidad/)).toBeInTheDocument();
+    expect(screen.getByText(/abierta las 24 horas/)).toBeInTheDocument();
   });
 
   it('should render navigation links', async () => {
-    const { default: HomePage } = await import('@/app/page');
-    render(<HomePage />);
+    await renderHome();
     expect(screen.getByRole('link', { name: /explorar productos/i })).toHaveAttribute('href', '/products');
     expect(screen.getByRole('link', { name: /ver tiendas/i })).toHaveAttribute('href', '/stores');
   });
 
-  it('should render feature cards', async () => {
-    const { default: HomePage } = await import('@/app/page');
-    render(<HomePage />);
-    expect(screen.getByText('Tiendas Locales')).toBeInTheDocument();
-    expect(screen.getByText('Productos Únicos')).toBeInTheDocument();
-    expect(screen.getByText('Comunicación Directa')).toBeInTheDocument();
+  it('should render stores strip', async () => {
+    await renderHome();
+    expect(screen.getByRole('link', { name: /todas las tiendas/i })).toHaveAttribute('href', '/stores');
   });
 
   it('should render seller CTA', async () => {
-    const { default: HomePage } = await import('@/app/page');
-    render(<HomePage />);
-    expect(screen.getByText('Crear Cuenta de Vendedor')).toBeInTheDocument();
+    await renderHome();
+    expect(screen.getByText('Crear cuenta de vendedor')).toBeInTheDocument();
   });
 });
 

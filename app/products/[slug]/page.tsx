@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     }
     
     const product = await response.json();
-    
+
     const seoTitle = product.name || 'Producto';
     const seoDesc = product.description || '';
-    
+
     return {
       title: `${seoTitle} | Commons Marketplace`,
       description: seoDesc?.slice(0, 160) || '',
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
         type: 'website',
       },
     };
-  } catch (error) {
+  } catch {
     return { title: 'Commons Marketplace' };
   }
 }

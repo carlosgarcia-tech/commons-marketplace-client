@@ -24,19 +24,19 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-display font-semibold uppercase tracking-wider transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none border-2';
+    'inline-flex items-center justify-center gap-2 font-body font-medium tracking-normal transition-all duration-200 press focus:outline-none focus:ring-2 focus:ring-primary-ghost disabled:opacity-50 disabled:pointer-events-none rounded-2xl';
 
   const variants = {
     primary:
-      'bg-primary text-white border-primary hover:bg-primary-hover hover:border-primary-hover focus:ring-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-0.5',
+      'bg-white/[0.12] backdrop-blur-xl border border-white/[0.12] text-white shadow-[0_14px_28px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.1)] hover:-translate-y-1 hover:bg-white/[0.18] hover:shadow-[0_20px_36px_-12px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)] focus:ring-white/20',
     secondary:
-      'bg-secondary text-white border-secondary hover:bg-secondary-light hover:border-secondary-light focus:ring-secondary shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-0.5',
+      'glass text-foreground hover:-translate-y-1 hover:border-white/20 hover:text-white',
     outline:
-      'bg-transparent border-gray-300 text-foreground hover:bg-gray-100 hover:border-gray-400 focus:ring-gray-300',
+      'glass-chip rounded-2xl text-[var(--text-secondary)] hover:bg-white/[0.08] hover:text-[var(--text-highlight)]',
     ghost:
-      'bg-transparent border-transparent text-foreground hover:bg-gray-100 focus:ring-gray-300',
+      'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-highlight)] hover:bg-white/5',
     danger:
-      'bg-danger text-white border-danger hover:opacity-90 focus:ring-danger shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-0.5',
+      'bg-[var(--danger-bg)] text-[var(--danger)] border border-[var(--danger)]/30 backdrop-blur-xl hover:-translate-y-1 hover:bg-[var(--danger-bg)] hover:shadow-[0_14px_28px_-10px_rgba(248,113,113,0.25)] focus:ring-[var(--danger)]/30',
   };
 
   const sizes = {
@@ -71,32 +71,37 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function Input({ className, label, error, id, maxLength, value, ...props }: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+  const errorId = error && inputId ? `${inputId}-error` : undefined;
 
   return (
     <div className="space-y-1.5">
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-xs font-display font-semibold uppercase tracking-wider text-gray-600"
+          className="block text-xs font-medium tracking-wide text-gray-600"
         >
           {label}
         </label>
       )}
       <input
         id={inputId}
+        value={value}
         className={cn(
-          'block w-full border-2 bg-surface px-3 py-2.5 font-body text-sm transition-all duration-200',
+          'block w-full rounded-[--radius-md] bg-white/5 border px-3 py-2.5 font-body text-sm transition-all duration-200',
           'placeholder:text-gray-400',
-          'focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-ghost)] focus:outline-none',
-          'disabled:bg-gray-100 disabled:cursor-not-allowed',
+          'text-foreground border-[var(--glass-border)]',
+          'focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-ghost)] focus:outline-none focus:bg-white/10',
+          'disabled:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50',
           error
             ? 'border-danger focus:border-danger focus:shadow-[0_0_0_3px_var(--danger-bg)]'
-            : 'border-gray-300',
+            : '',
           className
         )}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
         {...props}
       />
-      {error && <p className="text-xs font-medium text-danger">{error}</p>}
+      {error && <p className="text-xs font-medium text-danger" id={errorId}>{error}</p>}
       {!error && typeof maxLength === 'number' && (
         <p className="text-right text-[11px] text-gray-400">
           {String(value ?? '').length}/{maxLength}
@@ -120,21 +125,23 @@ export function Textarea({ className, label, error, id, maxLength, value, ...pro
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-xs font-display font-semibold uppercase tracking-wider text-gray-600"
+          className="block text-xs font-medium tracking-wide text-gray-600"
         >
           {label}
         </label>
       )}
       <textarea
         id={inputId}
+        value={value}
         className={cn(
-          'block w-full border-2 bg-surface px-3 py-2.5 font-body text-sm transition-all duration-200 resize-none',
+          'block w-full rounded-[--radius-md] bg-white/5 border px-3 py-2.5 font-body text-sm transition-all duration-200 resize-none',
           'placeholder:text-gray-400',
-          'focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-ghost)] focus:outline-none',
-          'disabled:bg-gray-100 disabled:cursor-not-allowed',
+          'text-foreground border-[var(--glass-border)]',
+          'focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-ghost)] focus:outline-none focus:bg-white/10',
+          'disabled:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50',
           error
             ? 'border-danger focus:border-danger focus:shadow-[0_0_0_3px_var(--danger-bg)]'
-            : 'border-gray-300',
+            : '',
           className
         )}
         {...props}
@@ -154,8 +161,8 @@ export function Card({ className, hoverable, children, ...props }: ComponentProp
   return (
     <div
       className={cn(
-        'industrial-card rounded-none overflow-hidden',
-        hoverable && 'cursor-pointer',
+        'glass rounded-2xl overflow-hidden',
+        hoverable && 'cursor-pointer hover:-translate-y-0.5 hover:scale-[1.01] transition-transform duration-200',
         className
       )}
       {...props}
@@ -167,7 +174,7 @@ export function Card({ className, hoverable, children, ...props }: ComponentProp
 
 export function CardHeader({ className, children, ...props }: ComponentProps<'div'>) {
   return (
-    <div className={cn('px-5 py-4 border-b-2 border-gray-200 bg-gray-50', className)} {...props}>
+    <div className={cn('px-5 py-4 border-b border-[var(--glass-border)] bg-white/[0.03]', className)} {...props}>
       {children}
     </div>
   );
@@ -183,7 +190,7 @@ export function CardContent({ className, children, ...props }: ComponentProps<'d
 
 export function CardFooter({ className, children, ...props }: ComponentProps<'div'>) {
   return (
-    <div className={cn('px-5 py-4 border-t-2 border-gray-200 bg-gray-50', className)} {...props}>
+    <div className={cn('px-5 py-4 border-t border-[var(--glass-border)] bg-white/[0.03]', className)} {...props}>
       {children}
     </div>
   );
@@ -197,16 +204,16 @@ export function Badge({
   ...props
 }: ComponentProps<'span'> & { variant?: 'default' | 'success' | 'warning' | 'danger' }) {
   const variants = {
-    default: 'bg-gray-100 text-gray-800 border border-gray-300',
-    success: 'bg-success-bg text-success border border-success/30',
-    warning: 'bg-warning-bg text-warning border border-warning/30',
-    danger: 'bg-danger-bg text-danger border border-danger/30',
+    default: 'text-[var(--gray-700)]',
+    success: 'text-[var(--success)] bg-[var(--success-bg)] border-[var(--success)]/25',
+    warning: 'text-[var(--warning)] bg-[var(--warning-bg)] border-[var(--warning)]/25',
+    danger: 'text-[var(--danger)] bg-[var(--danger-bg)] border-[var(--danger)]/25',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 font-mono text-[11px] font-medium uppercase tracking-wider border-2 rounded-none',
+        'inline-flex items-center px-2.5 py-0.5 font-mono text-[11px] tracking-wide rounded-full glass-chip',
         variants[variant],
         className
       )}
@@ -248,14 +255,16 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'rounded-none bg-gray-200 overflow-hidden relative',
+        'rounded-xl bg-gray-100 overflow-hidden relative',
         className
       )}
       style={{
-        backgroundImage: 'linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%)',
+        backgroundImage: 'linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%)',
         backgroundSize: '200% 100%',
         animation: 'shimmer 1.5s ease-in-out infinite',
       }}
     />
   );
 }
+
+export { LoadingScreen } from './loading-screen';

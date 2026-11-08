@@ -81,7 +81,7 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="p-3 text-xs font-mono uppercase tracking-wider text-danger bg-danger-bg border-2 border-danger/30">
+        <div role="alert" className="p-3 text-xs font-mono uppercase tracking-wider text-danger bg-danger-bg border-2 border-danger/30">
           {error}
         </div>
       )}

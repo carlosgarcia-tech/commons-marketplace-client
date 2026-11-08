@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Product, ProductFilters, PaginatedResponse } from '@/types';
+import type { Product, ProductFilters } from '@/types';
 import { productApi } from '@/lib/api';
 
 interface UseProductsResult {
@@ -84,6 +84,8 @@ export function useProducts(filters?: ProductFilters): UseProductsResult {
     } finally {
       setIsLoading(false);
     }
+    // filters object identity changes on each render; only its fields matter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters?.categoryId, filters?.search, filters?.page, filters?.limit]);
 
   useEffect(() => {

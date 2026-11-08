@@ -1,21 +1,36 @@
-import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, { type AxiosInstance, type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { API_URL, API_ENDPOINTS } from './endpoints';
 import { sanitizeFormData } from '@/lib/sanitize';
+import { setAuthCookies, clearAuthCookies } from '@/lib/auth-cookies';
 import type { RefreshResponse } from '@/types/api';
+
+/* Auth endpoints answer 401 as a business outcome (wrong password, no session,
+   refresh rejected). They must never trip the session-expiry machinery. */
+const AUTH_URL_PREFIXES = [
+  API_ENDPOINTS.auth.login,
+  API_ENDPOINTS.auth.register,
+  API_ENDPOINTS.auth.logout,
+  API_ENDPOINTS.auth.refresh,
+];
+
+const BASE_CONFIG = {
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+} as const;
 
 class ApiClient {
   private client: AxiosInstance;
+  /* Dedicated instance without response interceptors: the refresh call must
+     not re-enter this 401 logic, or the refresh deadlocks waiting for itself. */
+  private refreshClient: AxiosInstance;
   private isRefreshing = false;
-  private refreshSubscribers: ((token: string | null) => void)[] = [];
+  private refreshSubscribers: { resolve: (token: string | null) => void }[] = [];
 
   constructor() {
-    this.client = axios.create({
-      baseURL: API_URL,
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    this.client = axios.create({ baseURL: API_URL, ...BASE_CONFIG });
+    this.refreshClient = axios.create({ baseURL: API_URL, ...BASE_CONFIG });
 
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
@@ -45,101 +60,115 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-        
-        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-          if (this.isRefreshing) {
-            return new Promise<string | null>((resolve) => {
-              this.refreshSubscribers.push(resolve);
-            }).then((token) => {
-              if (!token) {
-                return Promise.reject(error);
-              }
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return this.client(originalRequest);
-            });
-          }
+        const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
-          originalRequest._retry = true;
-          this.isRefreshing = true;
-
-          try {
-            const token = await this.refreshToken();
-
-            if (token) {
-              this.refreshSubscribers.forEach((resolve) => resolve(token));
-              this.refreshSubscribers = [];
-
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return this.client(originalRequest);
-            } else {
-              this.refreshSubscribers.forEach((resolve) => resolve(null));
-              this.refreshSubscribers = [];
-              this.handleLogout();
-              return Promise.reject(error);
-            }
-          } catch (refreshError) {
-            this.refreshSubscribers.forEach((resolve) => resolve(null));
-            this.refreshSubscribers = [];
-            this.handleLogout();
-            return Promise.reject(refreshError);
-          } finally {
-            this.isRefreshing = false;
-          }
+        if (
+          error.response?.status !== 401 ||
+          !originalRequest ||
+          originalRequest._retry ||
+          this.isAuthRequest(originalRequest.url) ||
+          typeof window === 'undefined'
+        ) {
+          return Promise.reject(error);
         }
-        
-        return Promise.reject(error);
+
+        originalRequest._retry = true;
+
+        // A refresh is already in flight: queue this request behind it.
+        if (this.isRefreshing) {
+          return this.enqueueRetry(originalRequest, error);
+        }
+
+        this.isRefreshing = true;
+        try {
+          const token = await this.refreshToken();
+
+          if (token) {
+            this.drainQueue(token);
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return this.client(originalRequest);
+          }
+
+          this.drainQueue(null);
+          this.handleExpiredSession();
+          return Promise.reject(error);
+        } catch (refreshError) {
+          this.drainQueue(null);
+          this.handleExpiredSession();
+          return Promise.reject(refreshError);
+        } finally {
+          this.isRefreshing = false;
+        }
       }
     );
+  }
+
+  private isAuthRequest(url: string | undefined): boolean {
+    return !!url && AUTH_URL_PREFIXES.some((prefix) => url.startsWith(prefix));
+  }
+
+  // Subscribers decide what to do with null (reject their own request).
+  private drainQueue(token: string | null): void {
+    this.refreshSubscribers.forEach((subscriber) => subscriber.resolve(token));
+    this.refreshSubscribers = [];
+  }
+
+  private enqueueRetry(
+    originalRequest: InternalAxiosRequestConfig,
+    error: AxiosError
+  ): Promise<AxiosResponse> {
+    const queued = new Promise<string | null>((resolve) => {
+      this.refreshSubscribers.push({ resolve });
+    });
+    return queued.then((token) => {
+      if (!token) return Promise.reject(error);
+      originalRequest.headers.Authorization = `Bearer ${token}`;
+      return this.client(originalRequest) as Promise<AxiosResponse>;
+    });
   }
 
   private async refreshToken(): Promise<string | null> {
     try {
       const authData = localStorage.getItem('auth-storage');
       if (!authData) return null;
-      
+
       const parsed = JSON.parse(authData);
       const refreshToken = parsed?.state?.refreshToken;
       if (!refreshToken) return null;
 
-      const response = await this.client.post<RefreshResponse>(
+      const response = await this.refreshClient.post<RefreshResponse>(
         API_ENDPOINTS.auth.refresh,
         { refreshToken }
       );
 
       const newToken = response.data.token;
-      if (newToken) {
-        const newAuthData = {
-          ...parsed,
-          state: {
-            ...parsed.state,
-            token: newToken,
-            expiresAt: response.data.expiresAt,
-          },
-        };
-        localStorage.setItem('auth-storage', JSON.stringify(newAuthData));
-        if (typeof document !== 'undefined') {
-          const role = parsed?.state?.user?.role || '';
-          document.cookie = `auth-token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
-          if (role) {
-            document.cookie = `auth-role=${role}; path=/; max-age=86400; SameSite=Lax`;
-          }
-        }
-        return newToken;
-      }
-      
-      return null;
+      if (!newToken) return null;
+
+      const newAuthData = {
+        ...parsed,
+        state: {
+          ...parsed.state,
+          token: newToken,
+          expiresAt: response.data.expiresAt,
+        },
+      };
+      localStorage.setItem('auth-storage', JSON.stringify(newAuthData));
+      setAuthCookies(newToken, parsed?.state?.user?.role || '');
+      return newToken;
     } catch (error) {
+      // Refresh failed for any reason (network, 401, invalid): no session.
       console.error('[API] Token refresh failed:', error);
       return null;
     }
   }
 
-  private handleLogout(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth-storage');
-      window.location.href = '/';
-    }
+  private handleExpiredSession(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('auth-storage');
+    clearAuthCookies();
+    // Stay on the page; the app listens for this to reset the store and show
+    // a "session expired" state instead of hard-navigating home.
+    window.dispatchEvent(new CustomEvent('auth:session-expired'));
   }
 
   get<T>(url: string, params?: Record<string, unknown>) {

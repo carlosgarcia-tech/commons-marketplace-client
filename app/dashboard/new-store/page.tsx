@@ -14,7 +14,7 @@ export default function NewStorePage() {
   const [logo, setLogo] = useState<File | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
 
-  const { values, errors, isSubmitting, error, handleChange, handleSubmit, setFieldError } = useFormField({
+  const { values, errors, isSubmitting, error, handleChange, handleSubmit } = useFormField({
     initialValues: { storeName: '', description: '' },
     validate: (vals) => {
       const errs: Record<string, string> = {};

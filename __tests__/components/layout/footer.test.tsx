@@ -10,7 +10,7 @@ describe('Footer', () => {
 
   it('should render tagline', () => {
     render(<Footer />);
-    expect(screen.getByText('Built with raw intention')).toBeInTheDocument();
+    expect(screen.getByText('Hecho por la comunidad que lo vende')).toBeInTheDocument();
   });
 
   it('should have footer element', () => {

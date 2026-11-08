@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@/types';
 import { authApi } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/api/error-message';
+import { setAuthCookies, clearAuthCookies } from '@/lib/auth-cookies';
 
 interface RegisterResponse {
   needsEmailConfirmation?: boolean;
@@ -25,18 +27,6 @@ interface AuthState {
   clearError: () => void;
   clearEmailConfirmation: () => void;
   setUser: (user: User) => void;
-}
-
-function setAuthCookies(token: string, role: string) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `auth-token=${token}; path=/; max-age=86400; SameSite=Lax`;
-  document.cookie = `auth-role=${role}; path=/; max-age=86400; SameSite=Lax`;
-}
-
-function clearAuthCookies() {
-  if (typeof document === 'undefined') return;
-  document.cookie = 'auth-token=; path=/; max-age=0';
-  document.cookie = 'auth-role=; path=/; max-age=0';
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -67,7 +57,7 @@ export const useAuthStore = create<AuthState>()(
             setAuthCookies(response.token, response.user.role);
           }
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Login failed';
+          const errorMessage = getApiErrorMessage(error);
           
           if (errorMessage.toLowerCase().includes('email not confirmed')) {
             set({
@@ -114,7 +104,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           set({
             isLoading: false,
-            error: error instanceof Error ? error.message : 'Registration failed',
+            error: getApiErrorMessage(error),
           });
           throw error;
         }

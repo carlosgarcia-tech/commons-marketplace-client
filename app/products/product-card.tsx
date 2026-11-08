@@ -1,10 +1,12 @@
+/* Images come from arbitrary Supabase storage hosts; next/image would
+   require host-by-host remotePatterns churn. */
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { memo } from 'react';
 import type { Product } from '@/types';
-import { Badge, Button } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useAuthStore } from '@/store/auth-store';
 import { getProductId, getProductSlug } from '@/types';
@@ -17,6 +19,9 @@ interface ProductCardProps {
   showDelete?: boolean;
   onDelete?: (id: string) => void;
 }
+
+const NOISE_BG =
+  'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")';
 
 export const ProductCard = memo(function ProductCard({
   product,
@@ -56,14 +61,14 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <div className="relative group">
-      {/* Edit Button */}
+      {/* Owner actions */}
       {showEdit && editHref && (
         <div className="absolute top-3 left-3 z-20">
           <Link href={editHref}>
             <Button
               variant="outline"
               size="sm"
-              className="bg-surface/95 backdrop-blur-sm text-xs font-mono uppercase tracking-wider shadow-[2px_2px_0px_0px_var(--gray-300)]"
+              className="!bg-[var(--glass-bg-strong)] text-xs font-mono backdrop-blur-md"
             >
               Editar
             </Button>
@@ -71,13 +76,12 @@ export const ProductCard = memo(function ProductCard({
         </div>
       )}
 
-      {/* Delete Button */}
       {showDelete && onDelete && (
         <div className="absolute top-3 right-3 z-20">
           <Button
             variant="danger"
             size="sm"
-            className="bg-danger/95 backdrop-blur-sm text-xs font-mono uppercase tracking-wider"
+            className="!bg-[var(--glass-bg-strong)] text-xs font-mono backdrop-blur-md"
             onClick={handleDeleteClick}
           >
             Eliminar
@@ -86,36 +90,35 @@ export const ProductCard = memo(function ProductCard({
       )}
 
       <Link href={`/products/${productSlug}`} className="block">
-        <div className="industrial-card rounded-none overflow-hidden transition-all duration-300 hover:shadow-[8px_8px_0px_-2px_var(--gray-400)]">
-          {/* Image Container */}
+        <div className="industrial-card hover:-translate-y-1 group overflow-hidden">
+          {/* Image */}
           <div
-            className="relative bg-gray-100 overflow-hidden border-b-2 border-gray-200"
+            className="relative bg-[var(--gray-50)] overflow-hidden rounded-t-[27px] border-b border-[var(--glass-border)]"
             style={{ aspectRatio: '4/3' }}
           >
             <img
               src={imageUrl}
               alt={product.name}
-              className="w-full h-full object-contain p-6 transition-transform duration-500 group-hover:scale-110"
+              loading="lazy"
+              className="w-full h-full object-contain p-6 transition-transform duration-500 [transition-timing-function:var(--ease-out-expo)] group-hover:scale-[1.06]"
             />
 
-            {/* Noise Overlay on Image */}
+            {/* Grain on image */}
             <div
               className="absolute inset-0 pointer-events-none opacity-[0.04]"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")',
-                backgroundSize: '128px 128px',
-              }}
+              style={{ backgroundImage: NOISE_BG, backgroundSize: '128px 128px' }}
             />
 
-            {/* Wishlist Button */}
+            {/* Wishlist */}
             {showWishlist && (
               <button
                 onClick={handleWishlistClick}
                 disabled={!isAuthenticated}
-                className={`absolute top-3 right-3 z-10 p-2.5 border-2 transition-all duration-200 ${
+                aria-label={isInWishlist ? 'Quitar de deseos' : 'Agregar a deseos'}
+                className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass-chip grid place-items-center transition-all duration-200 ${
                   isInWishlist
-                    ? 'bg-primary text-white border-primary scale-110'
-                    : 'bg-surface/90 backdrop-blur-sm text-gray-400 border-gray-300 hover:text-primary hover:border-primary'
+                    ? 'text-white !bg-white/[0.15] !border-white/[0.25]'
+                    : 'text-[var(--text-secondary)] hover:text-white hover:!bg-white/[0.1]'
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 <svg
@@ -134,32 +137,32 @@ export const ProductCard = memo(function ProductCard({
               </button>
             )}
 
-            {/* Out of Stock Overlay */}
+            {/* Out of stock */}
             {product.stock === 0 && (
-              <div className="absolute inset-0 bg-surface/70 backdrop-blur-[2px] flex items-center justify-center">
-                <span className="bg-gray-800 text-white text-xs font-display font-semibold px-4 py-1.5 uppercase tracking-wider border-2 border-gray-700">
+              <div className="absolute inset-0 backdrop-blur-[3px] bg-black/50 flex items-center justify-center rounded-t-[27px]">
+                <span className="glass-chip rounded-full text-xs font-medium px-4 py-1.5 text-[var(--text-secondary)]">
                   Sin stock
                 </span>
               </div>
             )}
           </div>
 
-          {/* Info Section */}
-          <div className="flex flex-col gap-2 p-4 bg-surface">
+          {/* Info */}
+          <div className="flex flex-col gap-2 p-4">
             {product.store?.storeName && (
-              <p className="text-[11px] font-mono text-gray-400 uppercase tracking-wider truncate">
+              <p className="text-[11px] font-mono text-[var(--gray-400)] tracking-wide truncate">
                 {product.store.storeName}
               </p>
             )}
-            <h3 className="font-display font-semibold text-gray-900 text-sm leading-snug line-clamp-2 min-h-[2.5rem]">
+            <h3 className="font-medium text-foreground text-sm leading-snug line-clamp-2 min-h-[2.5rem] tracking-tight">
               {product.name}
             </h3>
-            <div className="flex items-center justify-between mt-1 pt-3 border-t-2 border-gray-100">
-              <span className="text-lg font-mono font-bold text-primary tracking-tight">
+            <div className="flex items-center justify-between mt-1 pt-3 border-t border-[var(--glass-border)]">
+              <span className="text-lg font-mono font-semibold text-white">
                 ${product.price.toFixed(2)}
               </span>
               {product.stock > 0 && (
-                <Badge variant="success" className="text-[11px] font-mono">
+                <Badge variant="success" className="text-[11px]">
                   {product.stock} en stock
                 </Badge>
               )}

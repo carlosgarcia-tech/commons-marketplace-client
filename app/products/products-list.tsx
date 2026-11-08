@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, memo } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useProducts } from '@/hooks/use-products';
 import { ProductCard } from './product-card';
@@ -44,9 +44,9 @@ function ProductsListContent() {
 
   if (error) {
     return (
-      <div className="text-center py-16 border-2 border-dashed border-gray-300 bg-surface">
-        <p className="text-danger font-mono uppercase tracking-wider text-sm">{error}</p>
-        <Button onClick={refetch} variant="outline" className="mt-6 font-mono uppercase text-xs">
+      <div className="text-center py-16 glass rounded-2xl">
+        <p className="text-danger text-sm">{error}</p>
+        <Button onClick={refetch} variant="outline" className="mt-6 text-xs font-mono">
           Reintentar
         </Button>
       </div>
@@ -55,15 +55,16 @@ function ProductsListContent() {
 
   if (!products || products.length === 0) {
     return (
-      <div className="text-center py-16 border-2 border-dashed border-gray-300 bg-surface">
-        <p className="text-gray-500 font-mono uppercase tracking-wider text-sm">No se encontraron productos</p>
+      <div className="text-center py-16 glass rounded-2xl">
+        <p className="text-gray-500 text-sm">No se encontraron productos</p>
+        <p className="text-gray-400 text-xs mt-2">Probá con otra búsqueda o categoría</p>
       </div>
     );
   }
 
   return (
     <div>
-      <p className="mb-6 text-xs font-mono text-gray-400 uppercase tracking-wider border-b-2 border-gray-200 pb-3">
+      <p className="mb-6 text-xs font-mono text-gray-400 tracking-wider border-b border-[var(--glass-border)] pb-3">
         {total} productos encontrados
       </p>
 
@@ -88,20 +89,20 @@ function ProductsListContent() {
             variant="outline"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="font-mono uppercase text-xs"
+            className="font-mono text-xs"
           >
-            ← Anterior
+            Anterior
           </Button>
-          <span className="flex items-center px-4 text-xs font-mono text-gray-600 border-x-2 border-gray-200">
+          <span className="flex items-center px-4 text-xs font-mono text-gray-600">
             {currentPage} / {totalPages}
           </span>
           <Button
             variant="outline"
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="font-mono uppercase text-xs"
+            className="font-mono text-xs"
           >
-            Siguiente →
+            Siguiente
           </Button>
         </div>
       )}

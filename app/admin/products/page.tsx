@@ -1,12 +1,48 @@
+/* Product images come from Supabase storage hosts; next/image would need
+   remotePatterns churn across buckets. */
+/* eslint-disable @next/next/no-img-element */
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRequireRole } from '@/hooks/use-auth';
 import { productApi } from '@/lib/api/products';
 import { storeApi } from '@/lib/api/stores';
 import { apiClient, API_ENDPOINTS } from '@/lib/api';
-import { Button, Input, Spinner } from '@/components/ui';
 import type { Product, Store } from '@/types';
-import Link from 'next/link';
+import {
+  AccessDenied,
+  EmptyState,
+  ErrorBanner,
+  GlassPanel,
+  LiquidShell,
+  LoadingState,
+  PageHeader,
+  SearchInput,
+} from '@/components/admin/glass';
+import { HBarChart, type ChartDatum } from '@/components/admin/charts';
+
+const TOP_STORES_IN_CHART = 6;
+const UNKNOWN_STORE_LABEL = 'Tienda desconocida';
+
+/**
+ * Cuenta productos por tienda y devuelve las `limit` con más productos.
+ *
+ * @param products Productos cargados.
+ * @param stores Mapa de tiendas por id, para resolver el nombre.
+ */
+function buildProductsByStore(products: Product[], stores: Map<string, Store>, limit: number): ChartDatum[] {
+  const counts = new Map<string, number>();
+  products.forEach((p) => counts.set(p.storeId, (counts.get(p.storeId) ?? 0) + 1));
+  return [...counts.entries()]
+    .map(([storeId, value]) => ({ id: storeId, label: stores.get(storeId)?.storeName || UNKNOWN_STORE_LABEL, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit);
+}
+
+/** `true` si el producto coincide con el texto de búsqueda (nombre o descripción). */
+function matchesSearch(product: Product, query: string): boolean {
+  const q = query.toLowerCase();
+  return product.name.toLowerCase().includes(q) || Boolean(product.description?.toLowerCase().includes(q));
+}
 
 export default function AdminProductsPage() {
   const { user, isAuthenticated, isLoading: roleLoading } = useRequireRole(['admin']);
@@ -15,7 +51,8 @@ export default function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const [storeFilter, setStoreFilter] = useState<string | null>(null);
+  const [page] = useState(1);
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -26,130 +63,96 @@ export default function AdminProductsPage() {
           productApi.getAll({ page, limit: 20, search: search || undefined }),
           storeApi.getAll(),
         ]);
+        // GET /stores devuelve el wrapper paginado { data, total, ... }, no un array.
         const storesMap = new Map<string, Store>();
-        (storesData as Store[]).forEach((s: Store) => storesMap.set(s._id, s));
+        (storesData as { data?: Store[] }).data?.forEach((s: Store) => storesMap.set(s._id, s));
         setStores(storesMap);
         const result = productsData as { data?: Product[]; products?: Product[]; items?: Product[] };
-        const productsArray = result.data || result.products || result.items || [];
-        setProducts(productsArray);
+        setProducts(result.data || result.products || result.items || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar productos');
       } finally {
         setIsLoading(false);
       }
     })();
+    // `search` intentionally excluded: filtering happens client-side; adding it
+    // would cancel in-flight fetches on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user, page]);
 
+  /** Elimina un producto tras confirmación del usuario. */
   const handleDelete = async (productId: string) => {
     if (!window.confirm('¿Eliminar este producto?')) return;
     try {
       await apiClient.delete(API_ENDPOINTS.admin.products.delete(productId));
-      setProducts(prev => prev.filter(p => p._id !== productId));
+      setProducts((prev) => prev.filter((p) => p._id !== productId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar');
     }
   };
 
-  const filteredProducts = search
-    ? products.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.description?.toLowerCase().includes(search.toLowerCase())
-      )
-    : products;
+  const chartData = useMemo(() => buildProductsByStore(products, stores, TOP_STORES_IN_CHART), [products, stores]);
 
-  if (roleLoading || isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Spinner />
-        <p className="text-xs font-mono text-gray-400 uppercase tracking-wider">Cargando productos</p>
-      </div>
-    );
-  }
+  const filteredProducts = useMemo(
+    () =>
+      products.filter(
+        (p) => (!storeFilter || p.storeId === storeFilter) && (!search || matchesSearch(p, search)),
+      ),
+    [products, storeFilter, search],
+  );
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-2">
-        <h1 className="h2 text-foreground">Acceso Denegado</h1>
-        <p className="text-sm font-mono text-gray-400 uppercase tracking-wider">No tienes permiso</p>
-      </div>
-    );
-  }
+  if (roleLoading || isLoading) return <LoadingState label="Cargando productos" />;
+  if (!isAuthenticated) return <AccessDenied />;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-10 relative">
-        <div className="absolute -left-4 top-0 w-1 h-full bg-primary" />
-        <div className="flex items-center gap-4">
-          <Link href="/admin" className="p-2 border-2 border-gray-200 bg-surface hover:border-primary transition-colors duration-200">
-            <span className="text-sm font-mono">←</span>
-          </Link>
-          <div>
-            <p className="text-xs font-mono text-primary uppercase tracking-wider mb-1">Administración</p>
-            <h1 className="h1 text-3xl md:text-4xl text-foreground">Gestionar Productos</h1>
-          </div>
-        </div>
-      </div>
+    <LiquidShell>
+      <PageHeader eyebrow="Administración" title="Gestionar Productos" backHref="/admin" />
 
-      {/* Error */}
-      {error && (
-        <div className="mb-6 p-3 border-2 border-danger bg-danger-bg font-mono text-xs uppercase tracking-wider text-danger">
-          {error}
-        </div>
+      <ErrorBanner message={error} />
+
+      {chartData.length > 0 && (
+        <GlassPanel
+          className="mb-5"
+          title="Productos por tienda"
+          aside={<span className="lg-muted">{storeFilter ? 'clic de nuevo para quitar el filtro' : 'clic para filtrar'}</span>}
+        >
+          <HBarChart data={chartData} selectedId={storeFilter} onSelect={setStoreFilter} />
+        </GlassPanel>
       )}
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">🔍</span>
-        <input
-          type="text"
-          placeholder="Buscar productos..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 bg-surface font-body text-sm focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-ghost)] focus:outline-none transition-all duration-200"
-        />
+      <div className="mb-5">
+        <SearchInput value={search} onChange={setSearch} placeholder="Buscar productos..." />
       </div>
 
-      {/* Products List */}
-      <div className="industrial-card rounded-none bg-surface overflow-hidden">
+      <GlassPanel
+        title="Todos los productos"
+        flush
+        aside={<span className="lg-badge"><i />{filteredProducts.length}</span>}
+      >
         {filteredProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 gap-2">
-            <span className="text-3xl">📦</span>
-            <p className="text-xs font-mono text-gray-400 uppercase tracking-wider">No hay productos</p>
-          </div>
+          <EmptyState icon="📦" title="No hay productos" />
         ) : (
-          <div>
-            {filteredProducts.map((product, idx) => {
-              const store = stores.get(product.storeId);
-              return (
-                <div
-                  key={product._id}
-                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors duration-150"
-                  style={{ borderBottom: idx < filteredProducts.length - 1 ? '2px solid var(--gray-200)' : 'none' }}
-                >
-                  <div className="w-10 h-10 bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
-                    {product.mainImageUrl && (
-                      <img src={product.mainImageUrl} alt={product.name} className="w-full h-full object-cover" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{product.name}</p>
-                    <p className="text-[11px] text-gray-400 truncate">
-                      {store?.storeName || 'Tienda desconocida'} • {product.price != null ? `$${product.price}` : 'Sin precio'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(product._id)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-danger border-2 border-danger/30 bg-danger-bg hover:bg-danger hover:text-white transition-all duration-200 shrink-0"
-                  >
-                    ✕ Eliminar
-                  </button>
+          filteredProducts.map((product) => {
+            const store = stores.get(product.storeId);
+            return (
+              <div key={product._id} className="lg-row">
+                <div className="lg-avatar">
+                  {product.mainImageUrl && <img src={product.mainImageUrl} alt={product.name} loading="lazy" />}
                 </div>
-              );
-            })}
-          </div>
+                <div className="lg-row__main">
+                  <p className="lg-row__title">{product.name}</p>
+                  <p className="lg-row__sub">
+                    {store?.storeName || UNKNOWN_STORE_LABEL} • {product.price != null ? `$${product.price}` : 'Sin precio'}
+                  </p>
+                </div>
+                <button type="button" onClick={() => handleDelete(product._id)} className="lg-btn lg-btn--danger lg-btn--sm shrink-0">
+                  ✕ Eliminar
+                </button>
+              </div>
+            );
+          })
         )}
-      </div>
-    </div>
+      </GlassPanel>
+    </LiquidShell>
   );
 }

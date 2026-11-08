@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Store, PaginatedResponse } from '@/types';
+import type { Store } from '@/types';
 import { storeApi } from '@/lib/api';
 
 interface UseStoresResult {
@@ -65,6 +65,8 @@ export function useStores(filters?: { status?: string; page?: number; limit?: nu
     } finally {
       setIsLoading(false);
     }
+    // filters object identity changes on each render; only its fields matter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters?.status, filters?.page, filters?.limit]);
 
   useEffect(() => {

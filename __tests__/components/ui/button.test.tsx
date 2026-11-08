@@ -11,13 +11,13 @@ describe('Button', () => {
   it('should render primary variant by default', () => {
     render(<Button>Primary</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('bg-primary');
+    expect(btn.className).toContain('bg-white/[0.12]');
   });
 
   it('should render outline variant', () => {
     render(<Button variant="outline">Outline</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('border-gray-300');
+    expect(btn.className).toContain('glass-chip');
   });
 
   it('should render ghost variant', () => {
@@ -29,7 +29,7 @@ describe('Button', () => {
   it('should render danger variant', () => {
     render(<Button variant="danger">Danger</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('bg-danger');
+    expect(btn.className).toContain('var(--danger-bg)');
   });
 
   it('should render small size', () => {

@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { cn } from '@/components/ui';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Badge } from '@/components/ui';
 
 interface NavLink {
@@ -29,12 +29,32 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { fetchWishlist } = useWishlistStore();
   const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchWishlist();
     }
+    // fetchWishlist is a stable store action; only auth toggles it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  // The API client broadcasts session expiry instead of hard-navigating;
+  // sync the store so protected pages show their logged-out state in place.
+  useEffect(() => {
+    const handleExpired = () => {
+      useAuthStore.setState({
+        user: null,
+        token: null,
+        refreshToken: null,
+        expiresAt: null,
+        isAuthenticated: false,
+        error: 'Tu sesión ha expirado. Vuelve a entrar.',
+      });
+    };
+    window.addEventListener('auth:session-expired', handleExpired);
+    return () => window.removeEventListener('auth:session-expired', handleExpired);
+  }, []);
 
   const userRole = user?.role?.toLowerCase() || '';
 
@@ -50,94 +70,149 @@ export function Navbar() {
 
   const handleLogout = async () => {
     await logout();
+    setMenuOpen(false);
     router.push('/');
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b-2 border-gray-300 bg-surface">
-      {/* Noise texture overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")',
-          backgroundSize: '256px 256px',
-        }}
-      />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
-              <Image
-                src="/logoCommons.png"
-                alt="Commons Marketplace"
-                width={36}
-                height={36}
-                className="h-9 w-auto transition-transform duration-300 group-hover:scale-105"
-              />
-              <span className="font-display text-lg font-black uppercase tracking-tight text-foreground hidden sm:block">
-                Commons
-              </span>
-            </Link>
-            <div className="hidden md:flex items-center gap-1">
-              {filteredLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="px-3 py-2 text-xs font-mono font-medium uppercase tracking-wider text-gray-600 hover:text-primary transition-colors duration-200 relative group/navlink"
-                >
-                  {link.label}
-                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary scale-x-0 group-hover/navlink:scale-x-100 transition-transform duration-200 origin-left" />
-                </Link>
-              ))}
+    <header className="sticky top-4 z-50 px-4 sm:px-6 lg:px-8">
+      <nav
+        aria-label="Navegación principal"
+        className="glass-nav max-w-7xl mx-auto rounded-2xl"
+      >
+        <div className="px-4 sm:px-5">
+          <div className="flex h-16 items-center justify-between gap-4">
+            <div className="flex items-center gap-6 min-w-0">
+              <Link href="/" className="flex items-center gap-2 group shrink-0 logo-glow rounded-xl">
+                <Image
+                  src="/logoCommons.png"
+                  alt="Commons Marketplace"
+                  width={36}
+                  height={36}
+                  className="h-8 w-auto"
+                />
+                <span className="font-semibold text-lg text-foreground hidden sm:block tracking-tight">
+                  Commons
+                </span>
+              </Link>
+              <div className="hidden md:flex items-center gap-1">
+                {filteredLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="px-3 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-highlight)] rounded-xl hover:bg-white/[0.06] transition-colors duration-200"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {isAuthenticated && user ? (
+                <>
+                  <div className="hidden sm:flex items-center gap-2">
+                    <span className="text-xs font-medium text-[var(--text-secondary)] truncate max-w-[140px]">
+                      {user?.name || user?.email}
+                    </span>
+                    <Badge
+                      variant={
+                        user?.role?.toLowerCase() === 'admin'
+                          ? 'warning'
+                          : user?.role?.toLowerCase() === 'seller'
+                          ? 'success'
+                          : 'default'
+                      }
+                      className="text-[10px]"
+                    >
+                      {user?.role?.toLowerCase() || 'buyer'}
+                    </Badge>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="glass-chip rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--danger)] px-3 py-1.5 transition-colors duration-200 press"
+                  >
+                    Salir
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-highlight)] px-3 py-2 rounded-xl transition-colors duration-200"
+                  >
+                    Entrar
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="press bg-white/[0.12] backdrop-blur-xl border border-white/[0.12] rounded-2xl text-white text-[13px] font-semibold px-4 py-2 shadow-[0_10px_20px_-8px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.1)] hover:-translate-y-1 hover:bg-white/[0.18] transition-all duration-200"
+                  >
+                    Registro
+                  </Link>
+                </>
+              )}
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="Abrir menú"
+                aria-expanded={menuOpen}
+                className="md:hidden glass-chip press rounded-xl p-2 text-[var(--text-secondary)] hover:text-[var(--text-highlight)] transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  {menuOpen ? (
+                    <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>
+                  ) : (
+                    <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
-
-          <div className="flex items-center gap-4">
-            {isAuthenticated && user ? (
-              <>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-gray-500 hidden sm:block">
-                    {user?.name || user?.email}
-                  </span>
-                  <Badge
-                    variant={
-                      user?.role?.toLowerCase() === 'admin'
-                        ? 'warning'
-                        : user?.role?.toLowerCase() === 'seller'
-                        ? 'success'
-                        : 'default'
-                    }
-                    className="text-[10px]"
-                  >
-                    {user?.role?.toLowerCase() || 'buyer'}
-                  </Badge>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="text-xs font-mono font-medium uppercase tracking-wider text-gray-500 hover:text-danger transition-colors duration-200"
-                >
-                  Salir
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-xs font-mono font-medium uppercase tracking-wider text-gray-600 hover:text-primary transition-colors duration-200"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  href="/register"
-                  className="bg-primary text-white px-4 py-2 text-xs font-display font-semibold uppercase tracking-wider border-2 border-primary hover:bg-primary-hover hover:border-primary-hover transition-all duration-200 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.15)]"
-                >
-                  Registro
-                </Link>
-              </>
-            )}
-          </div>
         </div>
-      </div>
-    </nav>
+
+        {/* Mobile sheet */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden overflow-hidden border-t"
+              style={{ borderColor: 'var(--glass-border)' }}
+            >
+              <div className="px-3 py-3 flex flex-col gap-1">
+                {filteredLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="px-3 py-2.5 text-[14px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-highlight)] hover:bg-white/[0.06] rounded-xl transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                {isAuthenticated && user && (
+                  <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+                    <span className="text-xs font-medium text-[var(--text-secondary)] truncate">{user?.name || user?.email}</span>
+                    <Badge
+                      variant={
+                        user?.role?.toLowerCase() === 'admin'
+                          ? 'warning'
+                          : user?.role?.toLowerCase() === 'seller'
+                          ? 'success'
+                          : 'default'
+                      }
+                      className="text-[10px]"
+                    >
+                      {user?.role?.toLowerCase() || 'buyer'}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+    </header>
   );
 }

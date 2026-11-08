@@ -57,7 +57,7 @@ addToWishlist: async (productId: string) => {
     try {
       const data = await apiClient.get<{ success: boolean; data: { isInWishlist: boolean } }>(API_ENDPOINTS.wishlist.check(productId));
       return data?.data?.isInWishlist ?? false;
-    } catch (error) {
+    } catch {
       return false;
     }
   },

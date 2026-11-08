@@ -1,19 +1,28 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { useFormField } from '@/hooks/use-form-field';
 import { Button, Input } from '@/components/ui';
 import { isEmail } from '@/lib/validation';
 
+/* Same-origin relative paths only; anything else (absolutes, //, schemes)
+   falls back to /. */
+function safeCallbackUrl(raw: string | null): string {
+  if (raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.includes('\\')) {
+    return raw;
+  }
+  return '/';
+}
+
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'));
   const { login, isLoading, error, clearError } = useAuthStore();
 
-  const { values, errors, handleChange, handleSubmit } = useFormField({
+  const { values, errors, handleChange, handleSubmit, setValues } = useFormField({
     initialValues: { email: '', password: '' },
     validate: (vals) => {
       const errs: Record<string, string> = {};
@@ -32,15 +41,28 @@ function LoginFormContent() {
         await login(vals.email, vals.password);
         router.push(callbackUrl);
       } catch {
-        // Error is handled by the store
+        // The store set the message; clear the password for the retry.
+        setValues((prev) => ({ ...prev, password: '' }));
       }
     },
   });
 
+  // A previous failure must not bleed into a fresh visit (client-side nav).
+  useEffect(() => {
+    clearError();
+    // clearError is a stable store action; mount-only on purpose
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleChangeAndClear = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (error) clearError();
+    handleChange(e);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="p-3 text-xs font-mono uppercase tracking-wider text-danger bg-danger-bg border-2 border-danger/30">
+        <div role="alert" className="p-3 text-xs font-mono uppercase tracking-wider text-danger bg-danger-bg border-2 border-danger/30">
           {error}
         </div>
       )}
@@ -51,7 +73,7 @@ function LoginFormContent() {
         type="email"
         placeholder="tu@email.com"
         value={values.email}
-        onChange={handleChange}
+        onChange={handleChangeAndClear}
         error={errors.email}
         autoComplete="email"
       />
@@ -62,7 +84,7 @@ function LoginFormContent() {
         type="password"
         placeholder="••••••••"
         value={values.password}
-        onChange={handleChange}
+        onChange={handleChangeAndClear}
         error={errors.password}
         autoComplete="current-password"
       />

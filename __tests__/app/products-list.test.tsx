@@ -82,8 +82,8 @@ describe('ProductsList', () => {
     });
     const { ProductsList } = await import('@/app/products/products-list');
     render(<ProductsList />);
-    expect(screen.getByText('← Anterior')).toBeInTheDocument();
-    expect(screen.getByText('Siguiente →')).toBeInTheDocument();
+    expect(screen.getByText('Anterior')).toBeInTheDocument();
+    expect(screen.getByText('Siguiente')).toBeInTheDocument();
     expect(screen.getByText('1 / 2')).toBeInTheDocument();
   });
 });

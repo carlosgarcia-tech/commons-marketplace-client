@@ -8,9 +8,9 @@ describe('Card', () => {
     expect(screen.getByText('Card content')).toBeInTheDocument();
   });
 
-  it('should apply industrial-card class', () => {
+  it('should apply glass material class', () => {
     const { container } = render(<Card><p>Content</p></Card>);
-    expect(container.firstChild).toHaveClass('industrial-card');
+    expect(container.firstChild).toHaveClass('glass');
   });
 
   it('should add cursor-pointer when hoverable', () => {

@@ -74,6 +74,8 @@ describe('matchPath', () => {
 });
 
 describe('middleware integration', () => {
+  const fetchMock = vi.fn();
+
   function createRequest(pathname: string, cookies?: Record<string, string>) {
     const url = new URL(pathname, 'http://localhost:4000');
     const req = new NextRequest(url);
@@ -85,61 +87,102 @@ describe('middleware integration', () => {
     return req;
   }
 
+  beforeEach(() => {
+    vi.stubEnv('INTERNAL_API_ORIGIN', 'https://backend.test');
+    vi.stubEnv('NEXT_PUBLIC_API_URL', '');
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
   it('should allow public routes without auth', async () => {
     const { middleware } = await import('@/middleware');
-    const req = createRequest('/products');
-    const res = middleware(req);
+    const res = await middleware(createRequest('/products'));
     expect(res.status).not.toBe(307);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('should redirect unauthenticated users to login', async () => {
     const { middleware } = await import('@/middleware');
-    const req = createRequest('/dashboard');
-    const res = middleware(req);
+    const res = await middleware(createRequest('/dashboard'));
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/login');
     expect(res.headers.get('location')).toContain('callbackUrl');
   });
 
+  it('should verify the session token against the backend', async () => {
+    const { middleware } = await import('@/middleware');
+    // Forged token: backend rejects it -> treated as no session, fail-closed
+    fetchMock.mockResolvedValueOnce(new Response('unauthorized', { status: 401 }));
+    const res = await middleware(createRequest('/dashboard', {
+      'auth-token': 'forged-token',
+      'auth-role': 'seller',
+    }));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/users/profile');
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/login');
+    expect(res.headers.get('location')).toContain('callbackUrl=%2Fdashboard');
+  });
+
   it('should allow authenticated sellers to dashboard', async () => {
     const { middleware } = await import('@/middleware');
-    const req = createRequest('/dashboard', {
-      'auth-token': 'valid-token',
-      'auth-role': 'seller',
-    });
-    const res = middleware(req);
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ role: 'Seller' }), { status: 200 })
+    );
+    const res = await middleware(createRequest('/dashboard', { 'auth-token': 'valid' }));
     expect(res.status).not.toBe(307);
   });
 
-  it('should redirect sellers away from admin', async () => {
+  it('should send non-admins to /forbidden (explained), home', async () => {
     const { middleware } = await import('@/middleware');
-    const req = createRequest('/admin', {
-      'auth-token': 'valid-token',
-      'auth-role': 'seller',
-    });
-    const res = middleware(req);
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ role: 'seller' }), { status: 200 })
+    );
+    const res = await middleware(createRequest('/admin', { 'auth-token': 'valid' }));
     expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toContain('localhost:4000/');
+    expect(res.headers.get('location')).toContain('localhost:4000/forbidden');
   });
 
   it('should allow admin to admin routes', async () => {
     const { middleware } = await import('@/middleware');
-    const req = createRequest('/admin', {
-      'auth-token': 'valid-token',
-      'auth-role': 'admin',
-    });
-    const res = middleware(req);
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ role: 'admin' }), { status: 200 })
+    );
+    const res = await middleware(createRequest('/admin', { 'auth-token': 'valid' }));
     expect(res.status).not.toBe(307);
   });
 
-  it('should redirect buyers away from dashboard', async () => {
+  it('should send buyers away from dashboard to /forbidden', async () => {
     const { middleware } = await import('@/middleware');
-    const req = createRequest('/dashboard', {
-      'auth-token': 'valid-token',
-      'auth-role': 'buyer',
-    });
-    const res = middleware(req);
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ role: 'buyer' }), { status: 200 })
+    );
+    const res = await middleware(createRequest('/dashboard', { 'auth-token': 'valid' }));
     expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/forbidden');
+  });
+
+  it('should let unknown routes through so they reach the 404 page', async () => {
+    const { middleware } = await import('@/middleware');
+    const res = await middleware(createRequest('/ruta-inexistente'));
+    expect(res.status).not.toBe(307);
+    const location = res.headers.get('location');
+    expect(location ?? '').not.toContain('/login');
+  });
+
+  it('should redirect unauthenticated users from profile to login', async () => {
+    const { middleware } = await import('@/middleware');
+    const res = await middleware(createRequest('/profile'));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/login');
+    expect(res.headers.get('location')).toContain('callbackUrl=%2Fprofile');
+  });
+
+  it('should fail closed when the backend is unreachable', async () => {
+    const { middleware } = await import('@/middleware');
+    fetchMock.mockRejectedValueOnce(new Error('boom'));
+    const res = await middleware(createRequest('/profile', { 'auth-token': 'valid' }));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/login');
   });
 });
 

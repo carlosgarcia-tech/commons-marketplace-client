@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
         type: 'website',
       },
     };
-  } catch (error) {
+  } catch {
     return { title: 'Commons Marketplace' };
   }
 }

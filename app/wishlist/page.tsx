@@ -14,6 +14,8 @@ export default function WishlistPage() {
     if (isAuthenticated) {
       fetchWishlist();
     }
+    // fetchWishlist is a stable store action; only auth toggles it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {

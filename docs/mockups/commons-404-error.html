@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Página no encontrada | Commons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030305;
+        }
+        
+        /* --- Liquid Background Animations --- */
+        .liquid-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.7;
+            animation: float 20s infinite ease-in-out alternate;
+            z-index: 0;
+        }
+        .blob-1 {
+            top: 10%; left: 10%; 
+            width: 40vw; height: 40vw; 
+            background: radial-gradient(circle, #1a1c23 0%, transparent 70%);
+        }
+        .blob-2 {
+            bottom: 10%; right: 10%; 
+            width: 50vw; height: 50vw; 
+            background: radial-gradient(circle, #22252e 0%, transparent 70%);
+            animation-delay: -5s;
+            animation-duration: 25s;
+        }
+        .blob-3 {
+            top: 30%; left: 40%; 
+            width: 35vw; height: 35vw; 
+            background: radial-gradient(circle, #2d303b 0%, transparent 70%);
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(10%, 15%) scale(1.05); }
+            66% { transform: translate(-10%, 5%) scale(0.95); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* --- Dark Liquid Glassmorphism Utilities --- */
+        .liquid-glass-card {
+            background: rgba(20, 22, 28, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 
+                0 20px 50px -10px rgba(0, 0, 0, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .liquid-button-primary {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #f1f5f9;
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .liquid-button-primary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.5),
+                0 0 15px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        /* --- SVG Illustration Animation --- */
+        .floating-illustration {
+            animation: gentle-float 6s ease-in-out infinite;
+        }
+        
+        .floating-slow {
+            animation: gentle-float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes gentle-float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        
+        /* Subtle glow for the SVG elements */
+        .svg-glow {
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        }
+    </style>
+</head>
+<body class="text-slate-300 min-h-screen relative overflow-hidden flex items-center justify-center selection:bg-slate-700 selection:text-white p-4">
+
+    <!-- Liquid Animated Background -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="liquid-blob blob-1"></div>
+        <div class="liquid-blob blob-2"></div>
+        <div class="liquid-blob blob-3"></div>
+    </div>
+
+    <!-- 404 Glass Card -->
+    <main class="relative z-10 w-full max-w-lg">
+        <div class="liquid-glass-card rounded-[2.5rem] p-10 md:p-14 flex flex-col items-center text-center">
+            
+            <!-- Animated SVG Illustration -->
+            <div class="w-48 h-48 mb-8 relative floating-illustration">
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full svg-glow">
+                    <!-- Background stars / dots -->
+                    <circle cx="20" cy="40" r="1.5" fill="#94a3b8" class="floating-slow" />
+                    <circle cx="170" cy="50" r="2" fill="#64748b" class="floating-illustration" />
+                    <circle cx="160" cy="160" r="1.5" fill="#94a3b8" class="floating-slow" />
+                    <circle cx="40" cy="150" r="2.5" fill="#64748b" class="floating-illustration" />
+                    
+                    <!-- Planet Ring (Back) -->
+                    <ellipse cx="100" cy="100" rx="70" ry="25" transform="rotate(-15 100 100)" stroke="rgba(255,255,255,0.15)" stroke-width="2" stroke-dasharray="8 4" />
+                    <ellipse cx="100" cy="100" rx="85" ry="30" transform="rotate(-15 100 100)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+                    
+                    <!-- Main Planet -->
+                    <circle cx="100" cy="100" r="45" fill="url(#planet-grad)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                    
+                    <!-- Crater/Detail -->
+                    <ellipse cx="85" cy="85" rx="8" ry="6" transform="rotate(-30 85 85)" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+                    <circle cx="120" cy="110" r="5" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+                    <ellipse cx="90" cy="120" rx="12" ry="4" transform="rotate(10 90 120)" fill="rgba(0,0,0,0.15)"/>
+
+                    <!-- Planet Ring (Front) -->
+                    <path d="M 32 118 A 70 25 0 0 0 168 81" transform="rotate(-15 100 100)" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
+                    
+                    <!-- 404 Text overlay on planet -->
+                    <text x="100" y="112" font-family="'Inter', sans-serif" font-size="32" font-weight="800" fill="#f8fafc" text-anchor="middle" letter-spacing="-1">404</text>
+
+                    <!-- Gradients -->
+                    <defs>
+                        <radialGradient id="planet-grad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(70 70) rotate(45) scale(100)">
+                            <stop stop-color="#334155" />
+                            <stop offset="0.6" stop-color="#0f172a" />
+                            <stop offset="1" stop-color="#020617" />
+                        </radialGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <!-- Typography -->
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-200 to-slate-500">
+                Página no encontrada
+            </h1>
+            
+            <p class="text-slate-400 mb-8 max-w-xs mx-auto font-light leading-relaxed">
+                Parece que te has perdido en el vacío de la red...
+            </p>
+
+            <!-- Call to Action -->
+            <a href="/" class="liquid-button-primary w-full sm:w-auto px-8 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2 group">
+                <svg class="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:-translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Volver al inicio
+            </a>
+            
+        </div>
+    </main>
+
+</body>
+</html>

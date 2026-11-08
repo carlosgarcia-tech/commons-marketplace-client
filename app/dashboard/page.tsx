@@ -1,3 +1,6 @@
+/* Product images come from Supabase storage hosts; next/image would need
+   remotePatterns churn across buckets. */
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useEffect, useState } from 'react';

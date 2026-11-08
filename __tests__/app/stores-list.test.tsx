@@ -46,7 +46,7 @@ describe('StoresList', () => {
     });
     const { StoresList } = await import('@/app/stores/stores-list');
     const { container } = render(<StoresList />);
-    expect(container.querySelector('.bg-gray-200')).toBeInTheDocument();
+    expect(container.querySelector('.bg-gray-100')).toBeInTheDocument();
   });
 
   it('should show error state', async () => {

@@ -70,7 +70,7 @@ describe('useAuthStore', () => {
       await expect(
         useAuthStore.getState().login('john@test.com', '123')
       ).rejects.toBe('string error');
-      expect(useAuthStore.getState().error).toBe('Login failed');
+      expect(useAuthStore.getState().error).toBe('Ocurrió un error inesperado. Intenta de nuevo.');
     });
   });
 
@@ -110,7 +110,7 @@ describe('useAuthStore', () => {
       await expect(
         useAuthStore.getState().register('John', 'john@test.com', '123', 'buyer')
       ).rejects.toBe('string error');
-      expect(useAuthStore.getState().error).toBe('Registration failed');
+      expect(useAuthStore.getState().error).toBe('Ocurrió un error inesperado. Intenta de nuevo.');
     });
   });
 

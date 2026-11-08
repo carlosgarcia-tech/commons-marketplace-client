@@ -12,7 +12,7 @@ interface ReviewsListProps {
 }
 
 export function ReviewsSection({ productId }: ReviewsListProps) {
-  const { reviews, isLoading, error, avgScore } = useReviews(productId);
+  const { reviews, isLoading, error } = useReviews(productId);
   const { isAuthenticated, user } = useAuth();
 
   if (isLoading) {

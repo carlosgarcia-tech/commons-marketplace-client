@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import { ProductsList } from './products-list';
 import { CategoriesSidebar } from './categories-sidebar';
 import { SearchBar } from './search-bar';
-import { Spinner } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,13 +23,11 @@ export const metadata: Metadata = {
 export default function ProductsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-      {/* Dramatic Header */}
-      <div className="mb-12 relative">
-        <div className="absolute -left-4 top-0 w-1 h-full bg-primary" />
+      <div className="mb-12 stagger-child">
         <h1 className="h1 text-4xl md:text-5xl lg:text-6xl text-foreground mb-4">
           Productos
         </h1>
-        <p className="text-sm font-mono text-gray-500 uppercase tracking-wider">
+        <p className="text-sm font-mono text-gray-400 tracking-wider">
           Explora todos los productos disponibles en nuestro marketplace
         </p>
       </div>
@@ -49,7 +46,7 @@ export default function ProductsPage() {
             fallback={
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="industrial-card h-80 animate-pulse bg-gray-200" />
+                  <div key={i} className="glass h-80 rounded-2xl animate-pulse" />
                 ))}
               </div>
             }
