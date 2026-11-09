@@ -108,9 +108,9 @@ describe('AdminProductsPage', () => {
     }));
     vi.doMock('@/lib/api/stores', () => ({
       storeApi: {
-        getAll: vi.fn().mockResolvedValue([
-          { _id: 's1', storeName: 'Tech Store' },
-        ]),
+        getAll: vi.fn().mockResolvedValue({
+          data: [{ _id: 's1', storeName: 'Tech Store' }],
+        }),
       },
     }));
     vi.doMock('@/lib/api', () => ({
@@ -160,9 +160,9 @@ describe('AdminProductsPage', () => {
     }));
     vi.doMock('@/lib/api/stores', () => ({
       storeApi: {
-        getAll: vi.fn().mockResolvedValue([
-          { _id: 's1', storeName: 'Tech Store' },
-        ]),
+        getAll: vi.fn().mockResolvedValue({
+          data: [{ _id: 's1', storeName: 'Tech Store' }],
+        }),
       },
     }));
     vi.doMock('@/lib/api', () => ({

@@ -14,6 +14,7 @@ describe('AdminCategoriesPage', () => {
     vi.doMock('@/components/ui', () => ({
       Input: (props: any) => <input {...props} />,
       Textarea: (props: any) => <textarea {...props} />,
+      Spinner: () => <div className="animate-spin" data-testid="spinner" />,
     }));
     vi.doMock('@/hooks/use-auth', () => ({
       useRequireRole: vi.fn().mockReturnValue({
@@ -43,6 +44,7 @@ describe('AdminCategoriesPage', () => {
     vi.doMock('@/components/ui', () => ({
       Input: (props: any) => <input {...props} />,
       Textarea: (props: any) => <textarea {...props} />,
+      Spinner: () => <div className="animate-spin" data-testid="spinner" />,
     }));
     vi.doMock('@/hooks/use-auth', () => ({
       useRequireRole: vi.fn().mockReturnValue({
@@ -74,6 +76,7 @@ describe('AdminCategoriesPage', () => {
     vi.doMock('@/components/ui', () => ({
       Input: (props: any) => <input {...props} />,
       Textarea: (props: any) => <textarea {...props} />,
+      Spinner: () => <div className="animate-spin" data-testid="spinner" />,
     }));
     vi.doMock('@/hooks/use-auth', () => ({
       useRequireRole: vi.fn().mockReturnValue({
@@ -115,6 +118,7 @@ describe('AdminCategoriesPage', () => {
     vi.doMock('@/components/ui', () => ({
       Input: (props: any) => <input {...props} />,
       Textarea: (props: any) => <textarea {...props} />,
+      Spinner: () => <div className="animate-spin" data-testid="spinner" />,
     }));
     vi.doMock('@/hooks/use-auth', () => ({
       useRequireRole: vi.fn().mockReturnValue({
@@ -140,12 +144,12 @@ describe('AdminCategoriesPage', () => {
 
     fireEvent.click(screen.getByText('Nueva categoría'));
     await waitFor(() => {
-      expect(screen.getByText('Completa los datos para crear una nueva categoría')).toBeInTheDocument();
+      expect(screen.getByText('Completa los datos')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Cancelar'));
     await waitFor(() => {
-      expect(screen.queryByText('Completa los datos para crear una nueva categoría')).not.toBeInTheDocument();
+      expect(screen.queryByText('Completa los datos')).not.toBeInTheDocument();
     });
   });
 
@@ -156,6 +160,7 @@ describe('AdminCategoriesPage', () => {
     vi.doMock('@/components/ui', () => ({
       Input: (props: any) => <input {...props} />,
       Textarea: (props: any) => <textarea {...props} />,
+      Spinner: () => <div className="animate-spin" data-testid="spinner" />,
     }));
     vi.doMock('@/hooks/use-auth', () => ({
       useRequireRole: vi.fn().mockReturnValue({

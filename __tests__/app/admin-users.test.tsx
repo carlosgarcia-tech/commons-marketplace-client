@@ -88,9 +88,11 @@ describe('AdminUsersPage', () => {
       expect(screen.getByText('Carlos Admin')).toBeInTheDocument();
       expect(screen.getByText('María Vendedora')).toBeInTheDocument();
       expect(screen.getByText('Juan Usuario')).toBeInTheDocument();
-      expect(screen.getByText('Admin')).toBeInTheDocument();
-      expect(screen.getByText('Vendedor')).toBeInTheDocument();
-      expect(screen.getByText('Usuario')).toBeInTheDocument();
+      // 'Admin'/'Vendedor'/'Usuario' aparecen tanto en el legend del donut como
+      // en los badges de rol de cada fila: se busca al menos una ocurrencia.
+      expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Vendedor').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Usuario').length).toBeGreaterThan(0);
     });
   });
 
